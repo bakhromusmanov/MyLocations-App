@@ -3,6 +3,8 @@
 
 Welcome to **MyLocations**, an app that helps users save their favorite places by recording GPS coordinates, attaching photos, and storing location details in a personal database. With **MyLocations**, your iPhone becomes a personal location album for all your memorable spots.
 
+![Screenshot 1](Simulator%20Screenshot%20-%200.png)
+
 ## 📱 What the App Can Do:
 
 ### 1. **Obtain GPS Coordinates**:
