@@ -56,13 +56,19 @@ class CategoryPickerViewController: UITableViewController {
    override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
       guard indexPath != selectedIndexPath else { return }
       
+      if let previousCell = tableView.cellForRow(at: selectedIndexPath) {
+         previousCell.accessoryType = .none
+      }
+      
       if let cell = tableView.cellForRow(at: indexPath) {
          delegate?.categoryPicker(self, didPickCategory: categories[indexPath.row])
          selectedCategoryName = categories[indexPath.row]
          cell.accessoryType = .checkmark
       }
       
-      navigationController?.popViewController(animated: true)
+      afterDelay(0.3) {
+         self.navigationController?.popViewController(animated: true)
+      }
    }
    
 }

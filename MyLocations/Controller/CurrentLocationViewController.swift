@@ -7,6 +7,7 @@
 
 import UIKit
 import CoreLocation
+import CoreData
 
 class CurrentLocationViewController: UIViewController, CLLocationManagerDelegate {
    
@@ -35,6 +36,7 @@ class CurrentLocationViewController: UIViewController, CLLocationManagerDelegate
    
    //MARK: - Custom variables
    var timer: Timer?
+   var managedObjectContext: NSManagedObjectContext!
    
    //MARK: - Location Manager variables
    let locationManager = CLLocationManager()
@@ -82,6 +84,7 @@ class CurrentLocationViewController: UIViewController, CLLocationManagerDelegate
          let controller = segue.destination as! LocationDetailsViewController
          controller.coordinate = location!.coordinate
          controller.placemark = placemark
+         controller.managedObjectContext = managedObjectContext
       }
    }
    
@@ -131,6 +134,7 @@ class CurrentLocationViewController: UIViewController, CLLocationManagerDelegate
       }
    }
    
+   //MARK: Show Alert
    func showAccessDeniedAlert() {
       let alert = UIAlertController(
          title: "Location Services Disabled",
@@ -145,7 +149,7 @@ class CurrentLocationViewController: UIViewController, CLLocationManagerDelegate
    }
    
    func updateLabels(){
-      //Update Location
+      //MARK: Update Location
       if let location = location {
          latitudeLabel.text = String(format: "%.8f", location.coordinate.latitude)
          longitudeLabel.text = String(format: "%.8f", location.coordinate.longitude)
@@ -156,7 +160,7 @@ class CurrentLocationViewController: UIViewController, CLLocationManagerDelegate
             messageLabel.text = "Tap 'Get My Location' to Start"
          }
          
-         //Update Adress Reverse Geocoding
+         //MARK: Update Address
          if let placemark = placemark {
             addressLabel.text = string(from: placemark)
          } else if performingReverseGeocoding {
@@ -172,7 +176,7 @@ class CurrentLocationViewController: UIViewController, CLLocationManagerDelegate
          addressLabel.text = ""
          tagButton.isHidden = true
          
-         //Update Message Label in case of errors
+         //MARK: Update Status Message
          let statusMessage: String
          if let error = lastLocationError as NSError? {
             if error.domain == kCLErrorDomain && error.code == CLError.denied.rawValue {
@@ -192,6 +196,7 @@ class CurrentLocationViewController: UIViewController, CLLocationManagerDelegate
       configureGetButton()
    }
    
+   //MARK: Convert Placemark to Readable Address
    func string(from placemark: CLPlacemark) -> String {
       var line1 = ""
       
@@ -234,6 +239,9 @@ class CurrentLocationViewController: UIViewController, CLLocationManagerDelegate
    }
    
    func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]){
+      
+      //MARK: Start Updating Location
+      
       guard let newLocation = locations.last else { return }
       print("DidUpdateLocations \(newLocation)")
       
@@ -272,7 +280,7 @@ class CurrentLocationViewController: UIViewController, CLLocationManagerDelegate
          }
       }
       
-      // Start reverse geocoding
+      //MARK: - Start reverse geocoding
       if !performingReverseGeocoding {
          print("*** Starting Reverse Geocoding")
          performingReverseGeocoding = true
@@ -280,7 +288,7 @@ class CurrentLocationViewController: UIViewController, CLLocationManagerDelegate
          geocoder.reverseGeocodeLocation(newLocation) { placemarks, error in
             self.lastGeocodingError = error
             if error == nil, let places = placemarks, !places.isEmpty {
-               self.placemark = places.last!
+               //self.placemark = places.last!
             } else {
                self.placemark = nil
             }

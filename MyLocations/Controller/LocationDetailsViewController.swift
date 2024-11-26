@@ -7,6 +7,7 @@
 
 import UIKit
 import CoreLocation
+import CoreData
 
 private let dateFormatter: DateFormatter = {
    let formatter = DateFormatter()
@@ -25,13 +26,16 @@ class LocationDetailsViewController: UITableViewController, CategoryPickerViewCo
    @IBOutlet weak var addressLabel: UILabel!
    @IBOutlet weak var dateLabel: UILabel!
    
-   //MARK: Custom Variables
+   //MARK: - Custom Variables
    var coordinate = CLLocationCoordinate2D(latitude: 0, longitude: 0)
    var placemark: CLPlacemark?
+   var managedObjectContext: NSManagedObjectContext!
+   var date = Date()
+   var categoryName = "No Category"
    
    override func viewDidLoad() {
       super.viewDidLoad()
-      categoryLabel.text = "No Category"
+      categoryLabel.text = categoryName
       descriptionTextView.text = ""
       
       latitudeLabel.text = String(format: "%.8f", coordinate.latitude)
@@ -42,7 +46,7 @@ class LocationDetailsViewController: UITableViewController, CategoryPickerViewCo
          addressLabel.text = "No Address Found"
       }
       
-      dateLabel.text = format(date: Date())
+      dateLabel.text = format(date: date)
       
       let gestureRecognizer = UITapGestureRecognizer(
          target: self,
@@ -54,9 +58,33 @@ class LocationDetailsViewController: UITableViewController, CategoryPickerViewCo
    
    //MARK: - IBActions
    @IBAction func doneButtonPressed(_ sender: UIBarButtonItem) {
+      let location = Location(context: managedObjectContext)
+      location.locationDescription = descriptionTextView.text
+      location.category = categoryName
+      location.date = date
+      location.latitude = coordinate.latitude
+      location.longitude = coordinate.longitude
+      location.placemark = placemark
+      
+      do {
+         try managedObjectContext.save()
+         showHud(text: "Tagged", imageName: "Success")
+      } catch {
+         fatalCoreDataError(error)
+      }
+   }
+   
+   @IBAction func cancelButtonPressed(_ sender: UIBarButtonItem) {
+      navigationController?.popViewController(animated: true)
+   }
+   
+   //MARK: Custom Functions
+   func showHud(text: String, imageName: String) {
       guard let mainView = navigationController?.parent?.view else { return }
+      
       let hudView = HudView.hud(inView: mainView, animated: true)
-      hudView.text = "Tagged"
+      hudView.text = text
+      hudView.imageName = imageName
       afterDelay(0.6) {
          hudView.hide(animated: true)
          self.navigationController?.popViewController(animated: true)
@@ -66,11 +94,6 @@ class LocationDetailsViewController: UITableViewController, CategoryPickerViewCo
       }
    }
    
-   @IBAction func cancelButtonPressed(_ sender: UIBarButtonItem) {
-      navigationController?.popViewController(animated: true)
-   }
-   
-   //MARK: Custom Functions
    @objc func hideKeyboard(_ gestureRecognizer: UITapGestureRecognizer) {
       let point = gestureRecognizer.location(in: tableView)
       let indexPath = tableView.indexPathForRow(at: point)
@@ -114,7 +137,7 @@ class LocationDetailsViewController: UITableViewController, CategoryPickerViewCo
       if segue.identifier == "PickCategory" {
          let controller = segue.destination as! CategoryPickerViewController
          controller.delegate = self
-         controller.selectedCategoryName = categoryLabel.text!
+         controller.selectedCategoryName = categoryName
       }
    }
    
@@ -137,6 +160,7 @@ class LocationDetailsViewController: UITableViewController, CategoryPickerViewCo
 extension LocationDetailsViewController {
    //MARK: - Custom Protocol Conformances
    func categoryPicker(_ controller: CategoryPickerViewController, didPickCategory name: String) {
-      categoryLabel.text = name
+      categoryName = name
+      categoryLabel.text = categoryName
    }
 }
