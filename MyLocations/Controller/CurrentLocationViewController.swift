@@ -219,6 +219,10 @@ class CurrentLocationViewController: UIViewController, CLLocationManagerDelegate
       }
       
       if let tmp = placemark.postalCode {
+         line2 += tmp + " "
+      }
+      
+      if let tmp = placemark.country {
          line2 += tmp
       }
       
