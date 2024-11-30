@@ -32,12 +32,25 @@ class LocationDetailsViewController: UITableViewController, CategoryPickerViewCo
    var managedObjectContext: NSManagedObjectContext!
    var date = Date()
    var categoryName = "No Category"
+   var descriptionText = ""
+   var locationToEdit: Location? {
+      didSet {
+         if let location = locationToEdit {
+            title = "Edit Location"
+            placemark = location.placemark
+            date = location.date
+            coordinate = CLLocationCoordinate2D(latitude: location.latitude, longitude: location.longitude)
+            categoryName = location.category
+            descriptionText = location.locationDescription
+         }
+      }
+   }
    
    override func viewDidLoad() {
       super.viewDidLoad()
-      categoryLabel.text = categoryName
-      descriptionTextView.text = ""
       
+      descriptionTextView.text = descriptionText
+      categoryLabel.text = categoryName
       latitudeLabel.text = String(format: "%.8f", coordinate.latitude)
       longitudeLabel.text = String(format: "%.8f", coordinate.longitude)
       if let placemark = placemark {
@@ -58,7 +71,17 @@ class LocationDetailsViewController: UITableViewController, CategoryPickerViewCo
    
    //MARK: - IBActions
    @IBAction func doneButtonPressed(_ sender: UIBarButtonItem) {
-      let location = Location(context: managedObjectContext)
+      let location: Location
+      let hudText: String
+      
+      if let temp = locationToEdit {
+         hudText = "Updated"
+         location = temp
+      } else {
+         hudText = "Tagged"
+         location = Location(context: managedObjectContext)
+      }
+      
       location.locationDescription = descriptionTextView.text
       location.category = categoryName
       location.date = date
@@ -68,7 +91,7 @@ class LocationDetailsViewController: UITableViewController, CategoryPickerViewCo
       
       do {
          try managedObjectContext.save()
-         showHud(text: "Tagged", imageName: "Success")
+         showHud(text: hudText, imageName: "Success")
       } catch {
          fatalCoreDataError(error)
       }
