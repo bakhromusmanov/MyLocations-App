@@ -176,14 +176,88 @@ class LocationDetailsViewController: UITableViewController, CategoryPickerViewCo
    override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
       if indexPath.row == 0 && indexPath.section == 0 {
          descriptionTextView.becomeFirstResponder()
+      } else if indexPath.row == 0 && indexPath.section == 1 {
+         tableView.deselectRow(at: indexPath, animated: true)
+         pickPhoto()
       }
    }
 }
 
+//MARK: - Custom Protocol Conformances
 extension LocationDetailsViewController {
-   //MARK: - Custom Protocol Conformances
    func categoryPicker(_ controller: CategoryPickerViewController, didPickCategory name: String) {
       categoryName = name
       categoryLabel.text = categoryName
+   }
+}
+
+//MARK: - extension Image Picker
+extension LocationDetailsViewController : UIImagePickerControllerDelegate, UINavigationControllerDelegate {
+   
+   func pickPhoto() {
+      if true || UIImagePickerController.isSourceTypeAvailable(.camera) {
+         showPhotoMenu()
+      } else {
+         choosePhotoFromLibrary()
+      }
+   }
+   
+   func showPhotoMenu() {
+      let alert = UIAlertController(
+         title: nil,
+         message: nil,
+         preferredStyle: .actionSheet)
+      
+      let actCancel = UIAlertAction(
+         title: "Cancel",
+         style: .cancel,
+         handler: nil)
+      alert.addAction(actCancel)
+      
+      let actPhoto = UIAlertAction(
+         title: "Take Photo",
+         style: .default,
+         handler: { _ in
+            self.takePhotoWithCamera()
+         })
+      alert.addAction(actPhoto)
+      
+      let actLibrary = UIAlertAction(
+         title: "Choose From Library",
+         style: .default,
+         handler: { _ in
+            self.choosePhotoFromLibrary()
+         })
+      alert.addAction(actLibrary)
+      
+      present(alert, animated: true, completion: nil)
+   }
+   
+   func takePhotoWithCamera() {
+      let imagePicker = UIImagePickerController()
+      imagePicker.sourceType = .camera
+      imagePicker.delegate = self
+      imagePicker.allowsEditing = true
+      present(imagePicker, animated: true)
+   }
+   
+   func choosePhotoFromLibrary(){
+      let imagePicker = UIImagePickerController()
+      imagePicker.sourceType = .photoLibrary
+      imagePicker.delegate = self
+      imagePicker.allowsEditing = true
+      present(imagePicker, animated: true)
+   }
+   
+   //MARK: Image Picker Delegate Methods
+   func imagePickerController(
+      _ picker: UIImagePickerController,
+      didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]
+   ) {
+      picker.dismiss(animated: true)
+   }
+   
+   func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
+      picker.dismiss(animated: true)
    }
 }

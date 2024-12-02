@@ -21,5 +21,11 @@
 			</array>
 		</dict>
 	</dict>
+	<key>NSCameraUsageDescription</key>
+	<string>Add photos to your location</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Use camera to capture photos for your locations</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>This app lets you keep track of interesting places. It needs access to the GPS coordinates for your location</string>
 </dict>
 </plist>

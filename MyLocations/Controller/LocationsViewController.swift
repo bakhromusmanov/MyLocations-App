@@ -121,6 +121,7 @@ class LocationsViewController: UITableViewController {
    }
 }
 
+//MARK: - extension NSFetchedResultsControllerDelegate
 extension LocationsViewController : NSFetchedResultsControllerDelegate {
    func controllerWillChangeContent(
       _ controller: NSFetchedResultsController<any NSFetchRequestResult>
@@ -176,3 +177,5 @@ extension LocationsViewController : NSFetchedResultsControllerDelegate {
       updateEditButtonVisibility()
    }
 }
+
+
