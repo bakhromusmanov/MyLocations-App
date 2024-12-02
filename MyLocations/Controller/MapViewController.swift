@@ -14,7 +14,20 @@ class MapViewController: UIViewController {
    @IBOutlet weak var mapView: MKMapView!
    
    //MARK: Custom Variables
-   var managedObjectContext: NSManagedObjectContext!
+   var managedObjectContext: NSManagedObjectContext! {
+      didSet{
+         NotificationCenter.default.addObserver(
+            forName:
+               Notification.Name.NSManagedObjectContextObjectsDidChange,
+            object: managedObjectContext,
+            queue: OperationQueue.main
+         ) { notification in
+            if self.isViewLoaded {
+               self.updateCustomLocations(notification: notification)
+            }
+         }
+      }
+   }
    var locations = [Location]()
    
    override func viewDidLoad() {
@@ -40,6 +53,7 @@ class MapViewController: UIViewController {
    }
    
    //MARK: Custom Functions
+   
    func region(for annotations: [MKAnnotation]) -> MKCoordinateRegion {
       
       let region: MKCoordinateRegion
@@ -93,26 +107,112 @@ class MapViewController: UIViewController {
       return mapView.regionThatFits(region)
    }
    
-   func updateLocations(){
+   func updateCustomLocations(notification: Notification) {
+      guard let dictionary = notification.userInfo else { return }
+      
+      guard performFetch() else { return }
+      
+      if let inserted = dictionary[NSInsertedObjectsKey] as? Set<Location> {
+         for location in inserted {
+            mapView.addAnnotation(location)
+         }
+      }
+      
+      if let updated = dictionary[NSUpdatedObjectsKey] as? Set<Location> {
+            for location in updated {
+               mapView.removeAnnotation(location)
+               mapView.addAnnotation(location)
+            }
+      }
+      
+      if let deleted = dictionary[NSDeletedObjectsKey] as? Set<Location> {
+         for location in deleted {
+            mapView.removeAnnotation(location)
+         }
+      }
+   }
+   
+   func updateLocations() {
       mapView.removeAnnotations(locations)
       
+      if performFetch() {
+         mapView.addAnnotations(locations)
+      }
+   }
+   
+   func performFetch() -> Bool {
       let fetchRequest = NSFetchRequest<Location>()
       let entity = Location.entity()
       fetchRequest.entity = entity
       
       do {
          locations = try managedObjectContext.fetch(fetchRequest)
-         mapView.addAnnotations(locations)
+         return true
       } catch {
          fatalCoreDataError(error)
+         return false
       }
    }
    
+   
+   
    // MARK: - Navigation
-   
-   
+   override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
+      if segue.identifier == "EditLocation" {
+         let controller = segue.destination as! LocationDetailsViewController
+         controller.managedObjectContext = managedObjectContext
+         
+         let button = sender as! UIButton
+         let location = locations[button.tag]
+         controller.locationToEdit = location
+      }
+   }
 }
 
 extension MapViewController : MKMapViewDelegate {
+   func mapView(_ mapView: MKMapView, viewFor annotation: any MKAnnotation) -> MKAnnotationView? {
+      guard annotation is Location else { return nil }
+      
+      let identifier = "Location"
+      var annotationView = mapView.dequeueReusableAnnotationView(
+         withIdentifier: identifier)
+      
+      if annotationView == nil {
+         let pinView = MKMarkerAnnotationView(
+            annotation: annotation,
+            reuseIdentifier: identifier
+         )
+         
+         // Configure pin view
+         pinView.isEnabled = true
+         pinView.canShowCallout = true
+         pinView.animatesWhenAdded = true
+         pinView.markerTintColor = #colorLiteral(red: 0.9254902005, green: 0.2352941185, blue: 0.1019607857, alpha: 1)
+         
+         //Add button
+         let rightButton = UIButton(type: .detailDisclosure)
+         rightButton.addTarget(
+            self,
+            action: #selector(showLocationDetails(_:)),
+            for: .touchUpInside
+         )
+         rightButton.tintColor = .systemBlue
+         pinView.rightCalloutAccessoryView = rightButton
+         annotationView = pinView
+      }
+      
+      if let annotationView = annotationView {
+         annotationView.annotation = annotation
+         if let button = annotationView.rightCalloutAccessoryView as? UIButton,
+            let index = locations.firstIndex(of: annotation as! Location) {
+            button.tag = index
+         }
+      }
+      
+      return annotationView
+   }
    
+   @objc func showLocationDetails(_ sender: UIButton) {
+      performSegue(withIdentifier: "EditLocation", sender: sender)
+   }
 }
