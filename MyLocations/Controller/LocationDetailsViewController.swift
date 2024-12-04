@@ -182,27 +182,17 @@ class LocationDetailsViewController: UITableViewController, CategoryPickerViewCo
          
       descriptionTextView.resignFirstResponder()
    }
-   
+
    func string(from placemark: CLPlacemark?) -> String {
       var text = ""
-      if let tmp = placemark?.subThoroughfare {
-         text += tmp + " "
-      }
-      if let tmp = placemark?.thoroughfare {
-         text += tmp + " "
-      }
-      if let tmp = placemark?.locality {
-         text += tmp + " "
-      }
-      if let tmp = placemark?.administrativeArea {
-         text += tmp + " "
-      }
-      if let tmp = placemark?.postalCode {
-         text += tmp + " "
-      }
-      if let tmp = placemark?.country {
-         text += tmp
-      }
+      
+      text.add(text: placemark?.subThoroughfare, separatedBy: " ")
+      text.add(text: placemark?.thoroughfare, separatedBy: " ")
+      text.add(text: placemark?.locality, separatedBy: " ")
+      text.add(text: placemark?.administrativeArea, separatedBy: " ")
+      text.add(text: placemark?.postalCode, separatedBy: " ")
+      text.add(text: placemark?.country)
+      
       return text
    }
    
@@ -221,7 +211,7 @@ class LocationDetailsViewController: UITableViewController, CategoryPickerViewCo
    
    //MARK: - Table View Delegates
    override func tableView(_ tableView: UITableView, willSelectRowAt indexPath: IndexPath) -> IndexPath? {
-      if indexPath.section == 0 || indexPath.section == 1 {
+      if indexPath.section == 0 || indexPath.section == 2 {
          return indexPath
       } else {
          return nil
@@ -231,7 +221,7 @@ class LocationDetailsViewController: UITableViewController, CategoryPickerViewCo
    override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
       if indexPath.row == 0 && indexPath.section == 0 {
          descriptionTextView.becomeFirstResponder()
-      } else if indexPath.row == 0 && indexPath.section == 1 {
+      } else if indexPath.row == 0 && indexPath.section == 2 {
          tableView.deselectRow(at: indexPath, animated: true)
          pickPhoto()
       }

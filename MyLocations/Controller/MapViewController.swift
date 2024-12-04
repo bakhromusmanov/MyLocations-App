@@ -196,7 +196,7 @@ extension MapViewController : MKMapViewDelegate {
             action: #selector(showLocationDetails(_:)),
             for: .touchUpInside
          )
-         rightButton.tintColor = .systemBlue
+         rightButton.tintColor = .accent
          pinView.rightCalloutAccessoryView = rightButton
          annotationView = pinView
       }
