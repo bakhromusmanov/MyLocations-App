@@ -25,6 +25,9 @@ class LocationDetailsViewController: UITableViewController, CategoryPickerViewCo
    @IBOutlet weak var longitudeLabel: UILabel!
    @IBOutlet weak var addressLabel: UILabel!
    @IBOutlet weak var dateLabel: UILabel!
+   @IBOutlet weak var imageView: UIImageView!
+   @IBOutlet weak var imageHeight: NSLayoutConstraint!
+   @IBOutlet weak var addPhotoLabel: UILabel!
    
    //MARK: - Custom Variables
    var coordinate = CLLocationCoordinate2D(latitude: 0, longitude: 0)
@@ -33,6 +36,7 @@ class LocationDetailsViewController: UITableViewController, CategoryPickerViewCo
    var date = Date()
    var categoryName = "No Category"
    var descriptionText = ""
+   var observer: Any!
    var locationToEdit: Location? {
       didSet {
          if let location = locationToEdit {
@@ -45,9 +49,24 @@ class LocationDetailsViewController: UITableViewController, CategoryPickerViewCo
          }
       }
    }
+   var image: UIImage? {
+      didSet {
+         if let image = image {
+            show(image: image)
+         }
+      }
+   }
    
    override func viewDidLoad() {
       super.viewDidLoad()
+      
+      if let location = locationToEdit {
+          if location.hasPhoto, let image = location.photoImage {
+             show(image: image)
+          }
+      }
+
+      listenForBackgroundNotification()
       
       descriptionTextView.text = descriptionText
       categoryLabel.text = categoryName
@@ -69,6 +88,11 @@ class LocationDetailsViewController: UITableViewController, CategoryPickerViewCo
       tableView.addGestureRecognizer(gestureRecognizer)
    }
    
+   deinit {
+      print(" deinit \(self)")
+      NotificationCenter.default.removeObserver(observer!)
+   }
+   
    //MARK: - IBActions
    @IBAction func doneButtonPressed(_ sender: UIBarButtonItem) {
       let location: Location
@@ -80,6 +104,7 @@ class LocationDetailsViewController: UITableViewController, CategoryPickerViewCo
       } else {
          hudText = "Tagged"
          location = Location(context: managedObjectContext)
+         location.photoID = nil
       }
       
       location.locationDescription = descriptionTextView.text
@@ -88,6 +113,20 @@ class LocationDetailsViewController: UITableViewController, CategoryPickerViewCo
       location.latitude = coordinate.latitude
       location.longitude = coordinate.longitude
       location.placemark = placemark
+      
+      if let image = image {
+         if !location.hasPhoto {
+            location.photoID = Location.nextPhotoID() as NSNumber
+         }
+
+         if let data = image.jpegData(compressionQuality: 0.5) {
+            do {
+               try data.write(to: location.photoURL, options: .atomic)
+            } catch {
+               print("Error writing file: \(error.localizedDescription)")
+            }
+         }
+      }
       
       do {
          try managedObjectContext.save()
@@ -102,6 +141,22 @@ class LocationDetailsViewController: UITableViewController, CategoryPickerViewCo
    }
    
    //MARK: Custom Functions
+   func listenForBackgroundNotification(){
+      observer = NotificationCenter.default
+         .addObserver(
+            forName: UIScene.didEnterBackgroundNotification,
+            object: nil,
+            queue: OperationQueue.main,
+            using: {[weak self] _ in
+               if let weakSelf = self {
+                  if weakSelf.presentedViewController != nil {
+                     weakSelf.dismiss(animated: true)
+                  }
+                  weakSelf.descriptionTextView.resignFirstResponder()
+               }
+            })
+   }
+   
    func showHud(text: String, imageName: String) {
       guard let mainView = navigationController?.parent?.view else { return }
       
@@ -194,6 +249,20 @@ extension LocationDetailsViewController {
 //MARK: - extension Image Picker
 extension LocationDetailsViewController : UIImagePickerControllerDelegate, UINavigationControllerDelegate {
    
+   func show(image: UIImage) {
+      imageView.isHidden = false
+      imageView.image = image
+      addPhotoLabel.text = ""
+      
+      view.layoutIfNeeded()
+
+      let aspectRatio = image.size.width / image.size.height
+      let newHeight = imageView.frame.width / aspectRatio
+      imageHeight.constant = newHeight
+      
+      tableView.reloadData()
+   }
+   
    func pickPhoto() {
       if true || UIImagePickerController.isSourceTypeAvailable(.camera) {
          showPhotoMenu()
@@ -254,6 +323,7 @@ extension LocationDetailsViewController : UIImagePickerControllerDelegate, UINav
       _ picker: UIImagePickerController,
       didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]
    ) {
+      image = info[.editedImage] as? UIImage
       picker.dismiss(animated: true)
    }
    
@@ -261,3 +331,4 @@ extension LocationDetailsViewController : UIImagePickerControllerDelegate, UINav
       picker.dismiss(animated: true)
    }
 }
+
