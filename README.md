@@ -35,10 +35,7 @@ Welcome to **MyLocations**, an app that helps users save their favorite places b
 ## 🖼️ Screenshots
 
 ![Screenshot 1](Simulator%20Screenshot%20-%201.png)
-![Screenshot 2](Simulator%20Screenshot%20-%202.png)
-![Screenshot 3](Simulator%20Screenshot%20-%203.png)
-![Screenshot 4](Simulator%20Screenshot%20-%204.png)
-![Screenshot 5](Simulator%20Screenshot%20-%205.png)
+
 
 ## 🚀 Features
 - **Real-time GPS Tracking**: Instantly capture and display your current coordinates and address.
